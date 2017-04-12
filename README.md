@@ -1,5 +1,5 @@
 # Cartridge Specification
-The purpose of this repository is to provide utilities that save time when developing [https://github.com/Accenture/adop-docker-compose](DevOps Platform) cartridges based on this [https://github.com/Accenture/adop-cartridge-specification](cartridge specification).
+The purpose of this repository is to provide utilities that save time when developing [DevOps Platform](https://github.com/Accenture/adop-docker-compose) cartridges based on this [cartridge specification](https://github.com/Accenture/adop-cartridge-specification).
 
 ## Stucture
 The structure is expected to conform to CARTRIDGE_SDK_VERSION 1.0
