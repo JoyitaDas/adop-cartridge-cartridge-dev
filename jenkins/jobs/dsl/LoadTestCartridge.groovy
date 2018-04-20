@@ -13,11 +13,50 @@ def loadCartridgeJob = freeStyleJob(projectFolderName + "/LoadDevCartridge")
 loadCartridgeJob.with{
     parameters{
         stringParam("CARTRIDGE_CLONE_URL", "ssh://jenkins@gerrit:29418/${projectFolderName}/my-new-cartridge", "Cartridge URL to load")
-        activeChoiceParam('SCM_PROVIDER') {
+        // Embedded script to determine available SCM providers
+        extensibleChoiceParameterDefinition {
+          name('SCM_PROVIDER')
+          choiceListProvider {
+            systemGroovyChoiceListProvider {
+              scriptText('''
+import hudson.model.*;
+import hudson.util.*;
+
+base_path = "/var/jenkins_home/userContent/datastore/pluggable/scm"
+
+// Initialise folder containing all SCM provider properties files
+String PropertiesPath = base_path + "/ScmProviders/"
+File folder = new File(PropertiesPath)
+def providerList = []
+
+// Loop through all files in properties data store and add to returned list
+for (File fileEntry : folder.listFiles()) {
+  if (!fileEntry.isDirectory()){
+    String title = PropertiesPath +  fileEntry.getName()
+    Properties scmProperties = new Properties()
+    InputStream input = null
+    input = new FileInputStream(title)
+    scmProperties.load(input)
+    String url = scmProperties.getProperty("scm.url")
+    String protocol = scmProperties.getProperty("scm.protocol")
+    String id = scmProperties.getProperty("scm.id")
+    String output = url + " - " + protocol + " (" + id + ")"
+    providerList.add(output)
+  }
+}
+
+if (providerList.isEmpty()) {
+    providerList.add("No SCM providers found")
+}
+
+return providerList;
+''')
+              defaultChoice('Top')
+              usePredefinedVariables(false)
+            }
+          }
+          editable(false)
           description('Your chosen SCM Provider and the appropriate cloning protocol')
-          filterable()
-          choiceType('SINGLE_SELECT')
-          scriptlerScript('retrieve_scm_props.groovy')
         }
     }
     environmentVariables {
