@@ -1,30 +1,30 @@
 // Folders
+import pluggable.scm.*;
+import adop.cartridge.properties.*;
+
+SCMProvider scmProvider = SCMProviderHandler.getScmProvider("${SCM_PROVIDER_ID}", binding.variables)
+CartridgeProperties cartridgeProperties = new CartridgeProperties("${CARTRIDGE_CUSTOM_PROPERTIES}");
+
 def workspaceFolderName = "${WORKSPACE_NAME}"
 def projectFolderName = "${PROJECT_NAME}"
+def projectScmNamespace = "${SCM_NAMESPACE}"
 
 // Jobs
 def publishCartridgeJob = freeStyleJob(projectFolderName + "/PublishCartridgeRepo")
+
+def newCartridgeGitRepo = cartridgeProperties.getProperty("scm.code.repo.name", "my-new-cartridge");
  
  // Setup Job 
  publishCartridgeJob.with{
     parameters{
-            stringParam("CARTRIDGE_REPO","ssh://jenkins@gerrit:29418/${projectFolderName}/my-new-cartridge","Git URL of the cartridge you want to publish.")
+            stringParam("CARTRIDGE_REPO",'${newCartridgeGitRepo}',"Git URL of the cartridge you want to publish.")
             stringParam("TARGET_CARTRIDGE_REPO","","Git URL of the target repository where you want to push your cartridge to. Ensure you have added the Jenkins SSH key to the repository manager.")
     }
     environmentVariables {
         env('WORKSPACE_NAME',workspaceFolderName)
         env('PROJECT_NAME',projectFolderName)
     }
-    scm {
-            git{
-                remote{
-                    name("origin")
-                    url('${TARGET_CARTRIDGE_REPO}')
-                    credentials("adop-jenkins-master")
-                }
-                branch("*/master")
-            }
-    }
+    scm scmProvider.get(projectScmNamespace,'${TARGET_CARTRIDGE_REPO}', "*/master", "adop-jenkins-master", null)
     wrappers {
         preBuildCleanup()
         injectPasswords()
